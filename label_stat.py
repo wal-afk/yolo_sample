@@ -1,30 +1,40 @@
-#%%
+# %%
 from glob import glob
 import csv
-from pprint import pprint
+import pandas as pd
 
-dir="dataset/sample1"
 
-def count_label(label_list, dir_path):
-    label_count={}
-    for path in glob(f"{dir_path}/*.txt"):
+class LabelCounter:
+    def __init__(self, root_dir: str):
+        self.root_dir = root_dir
+        self.label_list = self.read_label_def(f"{root_dir}/labels.txt")
+
+    def _count_label(self, dir_path):
+        label_count = {}
+        for path in glob(f"{dir_path}/*.txt"):
+            with open(path) as f:
+                reader = csv.reader(f, delimiter=" ")
+                for line in reader:
+                    label = self.label_list[int(line[0])]
+                    if label not in label_count:
+                        label_count[label] = 0
+                    label_count[label] += 1
+        return label_count
+
+    @staticmethod
+    def read_label_def(path):
         with open(path) as f:
-            reader=csv.reader(f,delimiter=" ")
-            for line in reader:
-                label=label_list[int(line[0])]
-                if label not in label_count:
-                    label_count[label]=0
-                label_count[label]+=1
-    return label_count
+            return [line.strip() for line in f.readlines()]
 
-label_list=[]
-with open(f"{dir}/labels.txt") as f:
-    for line in f.readlines():
-        label_list.append(line.strip())
+    def print_labels_count(self):
+        subdirs = ["train", "val"]
+        data = [
+            self._count_label(f"{self.root_dir}/labels/{subdir}") for subdir in subdirs
+        ]
+        df = pd.DataFrame(data, index=subdirs)
+        print(df.T.sort_index())
 
-label_count_train=count_label(label_list,f"{dir}/labels/train")
 
-pprint(label_count_train)
-print("sum=", sum(label_count_train.values()))
+LabelCounter("dataset/sample1").print_labels_count()
 
 # %%
