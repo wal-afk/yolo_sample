@@ -1,4 +1,4 @@
-path: /dataset/sample1
+path: /conotent/yolo_sample/dataset/sample1
 train: images/train
 val: images/val
 
