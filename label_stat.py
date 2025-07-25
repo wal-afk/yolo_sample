@@ -2,7 +2,7 @@
 from glob import glob
 import csv
 import pandas as pd
-
+import os
 
 class LabelCounter:
     def __init__(self, root_dir: str):
@@ -34,7 +34,7 @@ class LabelCounter:
         df = pd.DataFrame(data, index=subdirs)
         print(df.T.sort_index())
 
-
-LabelCounter("dataset/sample1").print_labels_count()
+DIR = os.path.dirname(__file__)
+LabelCounter(f"{DIR}/dataset/sample1").print_labels_count()
 
 # %%
