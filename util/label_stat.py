@@ -34,7 +34,4 @@ class LabelCounter:
         df = pd.DataFrame(data, index=subdirs)
         print(df.T.sort_index())
 
-DIR = os.path.dirname(__file__)
-LabelCounter(f"{DIR}/dataset/sample1").print_labels_count()
-
 # %%
