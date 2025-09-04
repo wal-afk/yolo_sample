@@ -36,7 +36,7 @@ class LabelCounter:
     def print_labels_count(self):
         image_file_names = {}
         for image_path in glob(f"{self.root_dir}/images/**/*.*", recursive=True):
-            group = os.path.realpath(
+            group = os.path.relpath(
                 os.path.dirname(image_path), start=f"{self.root_dir}/images"
             )
             if group not in image_file_names:
