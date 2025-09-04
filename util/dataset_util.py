@@ -1,9 +1,11 @@
 # %%
 from glob import glob
 import csv
-import pandas as pd
 import os
 import shutil
+
+import yaml
+import pandas as pd
 
 
 class DatasetChecker:
@@ -75,6 +77,20 @@ class DatasetChecker:
                 if lable_path is None:
                     continue
                 shutil.move(lable_path, f"{self.label_dir}/{subdir}/{file_name}")
+
+    def craete_custom_yaml(self):
+        with open(f"{self.root_dir}/custom.yaml", "w") as f:
+            f.write(
+                yaml.dump(
+                    {
+                        "path": self.root_dir,
+                        "train": "images/train",
+                        "val": "images/val",
+                        "nc": len(self.label_list),
+                        "names": self.label_list,
+                    }
+                )
+            )
 
 
 # %%
