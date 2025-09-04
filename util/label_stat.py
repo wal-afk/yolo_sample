@@ -13,7 +13,7 @@ class LabelCounter:
     def _count_label(self, label_dir: str, file_name_list):
         label_count = {}
         for file_name in file_name_list:
-            paths = glob(f"{label_dir}/**/{file_name}")
+            paths = glob(f"{label_dir}/**/{file_name}",recursive=True)
             if len(paths) == 0:
                 print(f"ignore: {file_name} not found")
             elif len(paths) >= 2:
