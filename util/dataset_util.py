@@ -78,7 +78,7 @@ class DatasetChecker:
                     continue
                 shutil.move(lable_path, f"{self.label_dir}/{subdir}/{file_name}")
 
-    def craete_custom_yaml(self):
+    def create_custom_yaml(self):
         with open(f"{self.root_dir}/custom.yaml", "w") as f:
             f.write(
                 yaml.dump(
