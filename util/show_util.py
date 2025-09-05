@@ -54,5 +54,8 @@ def create_yolo_GT_image(image_path, label_path, class_names):
         color = (255, 0, 0)
         cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
         label = class_names[int(cls)]
-        cv2.putText(image, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        face = cv2.FONT_HERSHEY_SIMPLEX
+        font_size = int(height / 10)
+        scale = cv2.getFontScaleFromHeight(face, font_size)
+        cv2.putText(image, label, (x1, y1 - int(font_size / 5)), face, scale, color, 2)
     return image
