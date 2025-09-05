@@ -31,8 +31,9 @@ def show_all_images(img_list: list[np.ndarray], ncols=4):
     for img in img_list:
         if c == 0:
             fig, axes = plt.subplots(1, ncols, figsize=(8 * ncols, 6))
+            for ax in axes:
+                ax.axis("off")
         axes[c].imshow(img)
-        axes[c].axis("off")
         c += 1
         if c == ncols:
             c = 0
@@ -82,7 +83,7 @@ def create_yolo_GT_image(image_path, label_path, class_names):
         cv2.rectangle(
             image,
             (x1, y_baseline - size[1]),
-            (x1 + size[0], y_baseline +below_baseline),
+            (x1 + size[0], y_baseline + below_baseline),
             line_color,
             cv2.FILLED,
         )
