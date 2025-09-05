@@ -75,7 +75,9 @@ def create_yolo_GT_image(image_path, label_path, class_names):
         scale = cv2.getFontScaleFromHeight(face, font_size)
         size, below_baseline = cv2.getTextSize(label, face, scale, thickness)
 
-        y_baseline = y1 - below_baseline if y1 >= below_baseline else y2 + size[1]
+        y_baseline = (
+            y1 - below_baseline if y1 >= below_baseline + size[1] else y2 + size[1]
+        )
 
         cv2.rectangle(
             image,
