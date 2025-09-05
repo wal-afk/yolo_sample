@@ -40,7 +40,7 @@ def show_all_images(img_list: list[np.ndarray], ncols=4):
 def create_yolo_GT_image(image_path, label_path, class_names):
     image = cv2.imread(image_path)[:, :, ::-1]
     height, width, _ = image.shape
-    print(type(image))
+    print(type(image), image.shape, image.dtype)
     with open(label_path, "r") as f:
         lines = f.readlines()
 
