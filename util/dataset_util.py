@@ -110,7 +110,7 @@ class DatasetChecker:
         copied_paths = []
         for data in self.data_list:
             os.makedirs(f"{self.label_dir}/{data.group}", exist_ok=True)
-            lable_path = self._find_label_file(data.label_file_name)
+            lable_path = data.find_label_path()
             if lable_path is None:
                 continue
             target_path = f"{self.label_dir}/{data.group}/{data.label_file_name}"
