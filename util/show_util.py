@@ -68,7 +68,7 @@ def create_yolo_GT_image(image_path, label_path, class_names):
         line_color = cols[int(cls) % 10]
         font_color = (255, 255, 255)
         thickness = math.ceil(height / 400)
-        cv2.rectangle(image, (x1, y1), (x2, y2), line_color, thickness)
+        cv2.rectangle(image, (x1, y1), (x2, y2), line_color, 3 * thickness)
         label = class_names[int(cls)]
         face = cv2.FONT_HERSHEY_SIMPLEX
         font_size = int(height / 20)
