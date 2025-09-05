@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
+import cv2
+
 
 def show_2_images_path(path1: str, path2: str):
     show_2_images(mpimg.imread(path1), mpimg.imread(path2))
@@ -33,3 +35,24 @@ def show_all_images(img_list: list[np.ndarray], ncols=4):
         if c == ncols:
             c = 0
             r += 1
+
+
+def create_yolo_GT_image(image_path, label_path, class_names):
+    image = cv2.imread(image_path)
+    height, width, _ = image.shape
+
+    with open(label_path, "r") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        cls, x_center, y_center, w, h = map(float, line.strip().split())
+        x1 = int((x_center - w / 2) * width)
+        y1 = int((y_center - h / 2) * height)
+        x2 = int((x_center + w / 2) * width)
+        y2 = int((y_center + h / 2) * height)
+
+        color = (0, 0, 255)
+        cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
+        label = class_names[int(cls)]
+        cv2.putText(image, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+    return image
