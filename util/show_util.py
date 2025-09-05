@@ -38,7 +38,8 @@ def show_all_images(img_list: list[np.ndarray], ncols=4):
 
 
 def create_yolo_GT_image(image_path, label_path, class_names):
-    image = cv2.imread(image_path)[:, :, ::-1]
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     height, width, _ = image.shape
     print(type(image), image.shape, image.dtype)
     with open(label_path, "r") as f:
