@@ -24,7 +24,7 @@ class Data:
 
         _label_path = self.find_label_path()
         self.label_count: dict[int, int] = (
-            self._count_label(_label_path) if _label_path is not None else None
+            self._count_label(_label_path) if _label_path is not None else {}
         )
 
     def find_label_path(self) -> str | None:
