@@ -23,7 +23,7 @@ class Data:
         )
 
         _label_path = self.find_label_path()
-        self.label_count: dict[str, int] = (
+        self.label_count: dict[int, int] = (
             self._count_label(_label_path) if _label_path is not None else None
         )
 
@@ -37,15 +37,15 @@ class Data:
             return lable_paths[0]
         return None
 
-    def _count_label(self, label_path: str) -> dict[str, int]:
+    def _count_label(self, label_path: str) -> dict[int, int]:
         label_count = {}
         with open(label_path) as f:
             reader = csv.reader(f, delimiter=" ")
             for line in reader:
-                label = self.label_list[int(line[0])]
-                if label not in label_count:
-                    label_count[label] = 0
-                label_count[label] += 1
+                label_idx = int(line[0])
+                if label_idx not in label_count:
+                    label_count[label_idx] = 0
+                label_count[label_idx] += 1
         return label_count
 
 
@@ -63,7 +63,8 @@ class DatasetChecker:
 
         self.label_data_dict: dict[str, list[Data]] = {}
         for data in self.data_list:
-            for label, count in data.label_count.items():
+            for label_idx, count in data.label_count.items():
+                label = self.label_list[label_idx]
                 if label not in self.label_data_dict:
                     self.label_data_dict[label] = []
                 self.label_data_dict[label].append(data)
@@ -94,7 +95,8 @@ class DatasetChecker:
             if grp not in grouped_label_count:
                 grouped_label_count[grp] = {}
 
-            for label, count in data.label_count.items():
+            for label_idx, count in data.label_count.items():
+                label = self.label_list[label_idx]
                 if label not in grouped_label_count[grp]:
                     grouped_label_count[grp][label] = 0
                 grouped_label_count[grp][label] += count
