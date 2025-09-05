@@ -22,17 +22,18 @@ class Data:
             f"{os.path.splitext(os.path.basename(image_path))[0]}.txt"
         )
 
-        _label_path = self.find_label_path()
+        _label_path = self.find_label_path(raise_if_more_than_one=True)
         self.label_count: dict[int, int] = (
             self._count_label(_label_path) if _label_path is not None else {}
         )
 
-    def find_label_path(self) -> str | None:
+    def find_label_path(self, raise_if_more_than_one=False) -> str | None:
         lable_paths = glob(
             f"{self.label_dir}/**/{self.label_file_name}", recursive=True
         )
         if len(lable_paths) >= 2:
-            print(f"ignore: {self.label_file_name} found more than 1")
+            if raise_if_more_than_one:
+                raise Exception(f"{self.label_file_name} found more than 1")
         elif len(lable_paths) == 1:
             return lable_paths[0]
         return None
