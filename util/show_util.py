@@ -82,7 +82,7 @@ def create_yolo_GT_image(image_path, label_path, class_names):
         cv2.rectangle(
             image,
             (x1, y_baseline - size[1]),
-            (x1 + size[0], y1),
+            (x1 + size[0], y_baseline +below_baseline),
             line_color,
             cv2.FILLED,
         )
