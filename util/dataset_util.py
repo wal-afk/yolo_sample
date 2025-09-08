@@ -108,8 +108,8 @@ class DatasetChecker:
         print(df.T.sort_index())
 
     def relocate_label_files(self):
-        copied_src = []
-        not_copied_src = []
+        copy_dict: dict[str, list[str]] = {}
+        preserve: list[str] = []
 
         for data in self.data_list:
             os.makedirs(f"{self.label_dir}/{data.group}", exist_ok=True)
@@ -118,14 +118,18 @@ class DatasetChecker:
                 continue
             target_path = f"{self.label_dir}/{data.group}/{data.label_file_name}"
             if os.path.abspath(lable_path) != os.path.abspath(target_path):
-                shutil.copy(lable_path, target_path)
-                copied_src.append(lable_path)
+                if lable_path not in copy_dict:
+                    copy_dict[lable_path] = []
+                copy_dict[lable_path].append(target_path)
             else:
-                not_copied_src.append(lable_path)
-                
-        for path in copied_src:
-            if path not in not_copied_src:
-                os.remove(path)
+                preserve.append(lable_path)
+
+        for lable_path, target_path in copy_dict.items():
+            shutil.copy(lable_path, target_path)
+
+        for lable_path in copy_dict:
+            if lable_path not in preserve:
+                os.remove(lable_path)
 
     def create_custom_yaml(self):
         with open(f"{self.root_dir}/custom.yaml", "w") as f:
