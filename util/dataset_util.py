@@ -124,8 +124,9 @@ class DatasetChecker:
             else:
                 preserve.append(lable_path)
 
-        for lable_path, target_path in copy_dict.items():
-            shutil.copy(lable_path, target_path)
+        for lable_path, target_path_list in copy_dict.items():
+            for target_path in target_path_list:
+                shutil.copy(lable_path, target_path)
 
         for lable_path in copy_dict:
             if lable_path not in preserve:
