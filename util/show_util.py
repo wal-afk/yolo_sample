@@ -27,7 +27,7 @@ def show_2_images(img1: np.ndarray, img2: np.ndarray):
     plt.show()
 
 
-def show_all_images(img_list: list[np.ndarray], ncols=4):
+def show_all_images(img_list: list[np.ndarray], ncols=3):
     r = 0
     c = 0
     for img in img_list:
@@ -93,43 +93,43 @@ def create_yolo_GT_image(image_path, label_path, class_names):
         cv2.putText(image, label, (x1, y_baseline), face, scale, font_color, thickness)
     return image
 
+
 class ImageViewer:
-  def __init__(self, img_list: list[np.ndarray], ncols=4):
-    self.ncols=ncols
-    self.img_list=img_list
-    self.idx=0
+    def __init__(self, img_list: list[np.ndarray], ncols=3):
+        self.ncols = ncols
+        self.img_list = img_list
+        self.idx = 0
 
-    # 出力用
-    self.out = Output()
+        # 出力用
+        self.out = Output()
 
-    # ボタン生成
-    self.btn_prev = Button(description="前へ", button_style='info')
-    self.btn_next = Button(description="次へ", button_style='info')
-    self.btn_prev.on_click(self.on_prev)
-    self.btn_next.on_click(self.on_next)
+        # ボタン生成
+        self.btn_prev = Button(description="前へ", button_style="info")
+        self.btn_next = Button(description="次へ", button_style="info")
+        self.btn_prev.on_click(self.on_prev)
+        self.btn_next.on_click(self.on_next)
 
+    def show(self):
+        self.out.clear_output(wait=True)
+        with self.out:
+            fig, axes = plt.subplots(1, self.ncols, figsize=(8 * self.ncols, 6))
+            for ax in axes:
+                ax.axis("off")
 
-  def show(self):
-      self.out.clear_output(wait=True)
-      with self.out:
-        fig, axes = plt.subplots(1, self.ncols, figsize=(8 * self.ncols, 6))
-        for ax in axes:
-            ax.axis("off")
+            for i in range(self.ncols):
+                axes[i].set_title(f"{self.idx+i+1}/{len(self.img_list)}")
+                axes[i].imshow(self.img_list[self.idx + i])
+            plt.show()
 
-        for i in range(self.ncols):
-            axes[i].set_title(f"{self.idx+i+1}/{len(self.img_list)}")
-            axes[i].imshow(self.img_list[self.idx+i])
-        plt.show()
+    def on_next(self, b):
+        self.idx = (self.idx + self.ncols) % len(self.img_list)
+        self.show()
 
-  def on_next(self,b):
-      self.idx = (self.idx + self.ncols) % len(self.img_list)
-      self.show()
+    def on_prev(self, b):
+        self.idx = (self.idx - self.ncols) % len(self.img_list)
+        self.show()
 
-  def on_prev(self,b):
-      self.idx = (self.idx - self.ncols) % len(self.img_list)
-      self.show()
-
-  def display(self):
-    # 表示
-    display(VBox([self.out, HBox([self.btn_prev, self.btn_next])]))
-    self.show()
+    def display(self):
+        # 表示
+        display(VBox([self.out, HBox([self.btn_prev, self.btn_next])]))
+        self.show()
