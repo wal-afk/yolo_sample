@@ -4,12 +4,24 @@ import csv
 import os
 import shutil
 import filecmp
+from zipfile import ZipFile
 
 import yaml
 import pandas as pd
 
 from .show_util import show_all_images, create_yolo_GT_image
 
+def unzip(dir_path:str, pattern_dict:list[str]):
+    shutil.rmtree(dir_path,ignore_errors=True)
+    for pattern in pattern_dict.values():
+      if len(glob(pattern))!=1:
+          print(f"{pattern}を1つだけアップロードしてください")
+          return False
+
+    for key, pattern in pattern_dict.items():    
+      with ZipFile(glob(pattern)[0]) as zip:
+          zip.extractall(f'{dir_path}/{key}')
+    return True
 
 class Data:
     def __init__(self, root_dir: str, image_path: str):
