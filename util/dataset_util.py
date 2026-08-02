@@ -11,20 +11,37 @@ import pandas as pd
 
 from .show_util import show_all_images, create_yolo_GT_image
 
-def unzip(dir_path:str, pattern_dict:list[str]):
-    shutil.rmtree(dir_path,ignore_errors=True)
-    for pattern in pattern_dict.values():
-      if len(glob(pattern))!=1:
-          print(f"{pattern}を1つだけアップロードしてください")
-          return False
 
-    for key, pattern in pattern_dict.items():    
-      with ZipFile(glob(pattern)[0]) as zip:
-          zip.extractall(f'{dir_path}/{key}')
+def unzip(dir_path: str, pattern_dict: list[str]):
+    shutil.rmtree(dir_path, ignore_errors=True)
+    for pattern in pattern_dict.values():
+        if len(glob(pattern)) != 1:
+            print(f"{pattern}を1つだけアップロードしてください")
+            return False
+
+    for key, pattern in pattern_dict.items():
+        with ZipFile(glob(pattern)[0]) as zip:
+            zip.extractall(f"{dir_path}/{key}")
     return True
 
+
 class Data:
+    """
+    画像ファイルに対するアノテーション（ラベルファイル）を関連付けて管理する為のクラス
+    次のフォルダ構成を前提とします
+    {root_dir}/
+        images/
+            **/{image_file_name}.*
+        labels/
+            **/{image_file_name}.txt
+    """
+
     def __init__(self, root_dir: str, image_path: str):
+        """
+        Args:
+            root_dir: データセットのルートディレクトリ
+            image_path: 画像ファイルへのパス（必ず{root_dir}/imagesを含むパスであること）
+        """
         self.root_dir = root_dir
         self.label_dir = f"{root_dir}/labels"
         self.image_dir = f"{root_dir}/images"
@@ -69,12 +86,45 @@ class Data:
 
 
 class DatasetChecker:
-    def __init__(self, root_dir: str):
+    def __init__(self, root_dir: str, *, merge_dataset_dir: str | None = None):
+        """
+        次のフォルダ構成を前提とします
+        {root_dir}/
+            images/
+                **/{image_file_name}.*
+            labels/
+                **/{image_file_name}.txt
+            labels.txt
+
+        Args:
+            root_dir: データセットのルートディレクトリ
+            merge_dataset_dir: 既存のデータセットをマージする場合はそのディレクトリを指定する
+        """
+
         self.root_dir = root_dir
         self.label_dir = f"{self.root_dir}/labels"
         self.image_dir = f"{self.root_dir}/images"
 
-        self.label_list = self._read_label_list(f"{root_dir}/labels.txt")
+        if merge_dataset_dir is not None:
+            for image_path in glob(
+                f"{merge_dataset_dir}/images/**/*.*", recursive=True
+            ):
+                target_path = f"{self.image_dir}/{os.path.relpath(image_path, start=f'{merge_dataset_dir}/images')}"
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                shutil.copyfile(image_path, target_path)
+            for label_path in glob(
+                f"{merge_dataset_dir}/labels/**/*.txt", recursive=True
+            ):
+                target_path = f"{self.label_dir}/{os.path.relpath(label_path, start=f'{merge_dataset_dir}/labels')}"
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                shutil.copyfile(label_path, target_path)
+
+        if merge_dataset_dir is not None:
+            self.label_list = self._merge_label_list(
+                f"{root_dir}/labels.txt", f"{merge_dataset_dir}/labels.txt"
+            )
+        else:
+            self.label_list = self._read_label_list(f"{root_dir}/labels.txt")
         self.data_list: list[Data] = [
             Data(self.root_dir, image_path)
             for image_path in glob(f"{self.image_dir}/**/*.*", recursive=True)
@@ -92,6 +142,21 @@ class DatasetChecker:
     def _read_label_list(path):
         with open(path) as f:
             return [line.strip() for line in f.readlines()]
+
+    @staticmethod
+    def _merge_label_list(original_path: str, extra_path: str):
+
+        with open(extra_path) as f:
+            extra_labels = [line.strip() for line in f.readlines()]
+
+        with open(original_path) as f:
+            original_labels = [line.strip() for line in f.readlines()]
+        labels = [*extra_labels, *original_labels]
+
+        with open(original_path, "w") as f:
+            f.write("\n".join(labels))
+
+        return labels
 
     def show_images_for_each_label(self):
         img_list = []
