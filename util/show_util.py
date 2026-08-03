@@ -4,7 +4,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from ipywidgets import Button, HBox, VBox, Output
+from ipywidgets import Button, HBox
 from IPython.display import display
 
 import cv2
@@ -100,26 +100,44 @@ class ImageViewer:
         self.img_list = img_list
         self.idx = 0
 
-        # 出力用
-        self.out = Output()
+        self.display_handle = None
 
-        # ボタン生成
         self.btn_prev = Button(description="前へ", button_style="info")
         self.btn_next = Button(description="次へ", button_style="info")
         self.btn_prev.on_click(self.on_prev)
         self.btn_next.on_click(self.on_next)
 
-    def show(self):
-        self.out.clear_output(wait=True)
-        with self.out:
-            fig, axes = plt.subplots(1, self.ncols, figsize=(8 * self.ncols, 6))
-            for ax in axes:
-                ax.axis("off")
+    def _create_figure(self):
+        fig, axes = plt.subplots(
+            1, self.ncols, figsize=(8 * self.ncols, 6)
+        )
 
-            for i in range(self.ncols):
-                axes[i].set_title(f"{self.idx+i+1}/{len(self.img_list)}")
-                axes[i].imshow(self.img_list[self.idx + i])
-            plt.show()
+        if self.ncols == 1:
+            axes = [axes]
+
+        for ax in axes:
+            ax.axis("off")
+
+        for i in range(self.ncols):
+            idx = self.idx + i
+            if idx >= len(self.img_list):
+                break
+
+            axes[i].set_title(f"{idx+1}/{len(self.img_list)}")
+            axes[i].imshow(self.img_list[idx])
+
+        fig.tight_layout()
+        return fig
+
+    def show(self):
+        fig = self._create_figure()
+
+        if self.display_handle is None:
+            self.display_handle = display(fig, display_id=True)
+        else:
+            self.display_handle.update(fig)
+
+        plt.close(fig)
 
     def on_next(self, b):
         self.idx = (self.idx + self.ncols) % len(self.img_list)
@@ -130,6 +148,5 @@ class ImageViewer:
         self.show()
 
     def display(self):
-        # 表示
-        display(VBox([self.out, HBox([self.btn_prev, self.btn_next])]))
+        display(HBox([self.btn_prev, self.btn_next]))
         self.show()
