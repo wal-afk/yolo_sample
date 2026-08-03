@@ -96,6 +96,9 @@ class DatasetChecker:
                 **/{image_file_name}.txt
             labels.txt
 
+        merge_dataset_dirが与えられた場合、クラスのindexが重複しないようにマージします。
+        その際、labels/**/*.txtとlabels.txtの内容を書き換えます。
+
         Args:
             root_dir: データセットのルートディレクトリ
             merge_dataset_dir: 既存のデータセットをマージする場合はそのディレクトリを指定する
@@ -106,25 +109,29 @@ class DatasetChecker:
         self.image_dir = f"{self.root_dir}/images"
 
         if merge_dataset_dir is not None:
-            for image_path in glob(
+            # originalファイルの書き換え。
+            self.label_list = self._merge_label(root_dir, merge_dataset_dir)
+
+            # ファイルコピーによるマージ
+            for extra_image_path in glob(
                 f"{merge_dataset_dir}/images/**/*.*", recursive=True
             ):
-                target_path = f"{self.image_dir}/{os.path.relpath(image_path, start=f'{merge_dataset_dir}/images')}"
+                target_path = f"{self.image_dir}/{os.path.relpath(
+                    extra_image_path,
+                    start=f'{merge_dataset_dir}/images')}"
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                shutil.copyfile(image_path, target_path)
-            for label_path in glob(
+                shutil.copyfile(extra_image_path, target_path)
+            for extra_label_path in glob(
                 f"{merge_dataset_dir}/labels/**/*.txt", recursive=True
             ):
-                target_path = f"{self.label_dir}/{os.path.relpath(label_path, start=f'{merge_dataset_dir}/labels')}"
+                target_path = f"{self.label_dir}/{os.path.relpath(
+                    extra_label_path,
+                    start=f'{merge_dataset_dir}/labels')}"
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                shutil.copyfile(label_path, target_path)
-
-        if merge_dataset_dir is not None:
-            self.label_list = self._merge_label_list(
-                f"{root_dir}/labels.txt", f"{merge_dataset_dir}/labels.txt"
-            )
+                shutil.copyfile(extra_label_path, target_path)
         else:
             self.label_list = self._read_label_list(f"{root_dir}/labels.txt")
+
         self.data_list: list[Data] = [
             Data(self.root_dir, image_path)
             for image_path in glob(f"{self.image_dir}/**/*.*", recursive=True)
@@ -144,17 +151,36 @@ class DatasetChecker:
             return [line.strip() for line in f.readlines()]
 
     @staticmethod
-    def _merge_label_list(original_path: str, extra_path: str):
+    def _merge_label(root_dir: str, extra_dir: str):
+        """
+        2つのデータセット中のlabelをマージする為に、
+        root_dir中にあるlabels.txtとlabels/**/*.txtの内容を書き換えます。
 
-        with open(extra_path) as f:
+        Args:
+            root_dir: 元のデータセットのルートディレクトリ
+            extra_dir: 追加するデータセットのルートディレクトリ
+        """
+
+        with open(f"{extra_dir}/labels.txt") as f:
             extra_labels = [line.strip() for line in f.readlines()]
 
-        with open(original_path) as f:
+        with open(f"{root_dir}/labels.txt") as f:
             original_labels = [line.strip() for line in f.readlines()]
         labels = [*extra_labels, *original_labels]
 
-        with open(original_path, "w") as f:
+        with open(f"{root_dir}/labels.txt", "w") as f:
             f.write("\n".join(labels))
+
+        for original_label_path in glob(f"{root_dir}/labels/**/*.txt", recursive=True):
+            with open(original_label_path) as f:
+                lines = f.readlines()
+            with open(original_label_path, "w") as f:
+                for line in lines:
+                    sp = line.split(" ")
+                    label_idx = int(sp[0])
+                    new_label_idx = label_idx + len(extra_labels)
+                    updated_line = " ".join([str(new_label_idx), *sp[1:]])
+                    f.write(updated_line)
 
         return labels
 
