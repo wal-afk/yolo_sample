@@ -161,12 +161,23 @@ class DatasetChecker:
             extra_dir: 追加するデータセットのルートディレクトリ
         """
 
+        label_to_idx: dict[str, int] = {}
+        labels: list[str] = []
+
+        # labelはextra_dirの方が先に来るようにする。つまり、extra_dirのlabelのindexは0から始まる。
         with open(f"{extra_dir}/labels.txt") as f:
             extra_labels = [line.strip() for line in f.readlines()]
 
+        labels = [*extra_labels]
+        label_to_idx = {label: idx for idx, label in enumerate(extra_labels)}
+
         with open(f"{root_dir}/labels.txt") as f:
             original_labels = [line.strip() for line in f.readlines()]
-        labels = [*extra_labels, *original_labels]
+
+        for original_label in original_labels:
+            if original_label not in labels:
+                label_to_idx[original_label] = len(labels)
+                labels.append(original_label)
 
         with open(f"{root_dir}/labels.txt", "w") as f:
             f.write("\n".join(labels))
@@ -177,8 +188,7 @@ class DatasetChecker:
             with open(original_label_path, "w") as f:
                 for line in lines:
                     sp = line.split(" ")
-                    label_idx = int(sp[0])
-                    new_label_idx = label_idx + len(extra_labels)
+                    new_label_idx = label_to_idx[original_labels[int(sp[0])]]
                     updated_line = " ".join([str(new_label_idx), *sp[1:]])
                     f.write(updated_line)
 
