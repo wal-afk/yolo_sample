@@ -116,17 +116,19 @@ class DatasetChecker:
             for extra_image_path in glob(
                 f"{merge_dataset_dir}/images/**/*.*", recursive=True
             ):
-                target_path = f"{self.image_dir}/{os.path.relpath(
-                    extra_image_path,
-                    start=f'{merge_dataset_dir}/images')}"
+                rel_path = os.path.relpath(
+                    extra_image_path, start=f"{merge_dataset_dir}/images"
+                )
+                target_path = f"{self.image_dir}/{rel_path}"
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
                 shutil.copyfile(extra_image_path, target_path)
             for extra_label_path in glob(
                 f"{merge_dataset_dir}/labels/**/*.txt", recursive=True
             ):
-                target_path = f"{self.label_dir}/{os.path.relpath(
-                    extra_label_path,
-                    start=f'{merge_dataset_dir}/labels')}"
+                rel_path = os.path.relpath(
+                    extra_label_path, start=f"{merge_dataset_dir}/labels"
+                )
+                target_path = f"{self.label_dir}/{rel_path}"
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
                 shutil.copyfile(extra_label_path, target_path)
         else:
