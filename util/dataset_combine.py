@@ -7,6 +7,46 @@ from glob import glob
 from .dataset_util import DatasetChecker
 
 
+def extract(dataset_zip: str, dest: str) -> str:
+    """1つのデータセット zip を dest に展開する。"""
+    from zipfile import ZipFile
+
+    shutil.rmtree(dest, ignore_errors=True)
+    os.makedirs(dest, exist_ok=True)
+    with ZipFile(dataset_zip) as z:
+        z.extractall(dest)
+    return _find_dataset_root(dest)
+
+
+def _find_dataset_root(base: str) -> str:
+    """images/ を持つ階層をデータセットルートとして返す（1階層ネストしていても拾う）。"""
+    if os.path.isdir(f"{base}/images"):
+        return base
+    for images_dir in sorted(glob(f"{base}/**/images", recursive=True)):
+        return os.path.dirname(images_dir)
+    return base
+
+
+def available(drive_dir: str = ".") -> list[str]:
+    """使えるデータセット名の一覧（drive_dir 内 / カレントの zip 名から .zip を除いたもの）。"""
+    zips = glob(os.path.join(drive_dir, "*.zip")) + glob("*.zip")
+    return sorted({os.path.splitext(os.path.basename(p))[0] for p in zips})
+
+
+def prepare(name: str, drive_dir: str = ".", workdir: str = "ds") -> str:
+    """
+    データセット名から結合用の source パスを用意する。
+    戻り値: データセットルート（images/・labels/・labels.txt を持つ）。
+    """
+    for zp in (os.path.join(drive_dir, f"{name}.zip"), f"{name}.zip"):
+        if os.path.exists(zp):
+            return extract(zp, os.path.join(workdir, name))
+    for d in (os.path.join(drive_dir, name), name):
+        if os.path.isdir(os.path.join(d, "images")):
+            return d
+    raise FileNotFoundError(f"{name}.zip が見つかりません（{drive_dir} かアップロードを確認）")
+
+
 def combine(sources: list[str], work: str = "dataset", names: list[str] | None = None):
     """
     複数のデータセットを結合し、custom.yaml を作る。
