@@ -21,32 +21,28 @@ def extract(images_zip: str, labels_zip: str, dest: str) -> str:
 
 
 def available(drive_dir: str = ".") -> list[str]:
-    """使えるデータセット名の一覧（<drive_dir>/<name>/images_<name>.zip から name を取り出す）。"""
-    imgs = (glob(os.path.join(drive_dir, "*", "images_*.zip"))
-            + glob(os.path.join(drive_dir, "images_*.zip")) + glob("images_*.zip"))
-    return sorted({os.path.basename(p)[len("images_"):-len(".zip")] for p in imgs})
+    """使えるデータセット名の一覧（<drive_dir>/<name>/ に images*.zip があるフォルダ名）。"""
+    return sorted({os.path.basename(os.path.dirname(p))
+                   for p in glob(os.path.join(drive_dir, "*", "images*.zip"))})
 
 
 def prepare(name: str, drive_dir: str = ".", workdir: str = "ds") -> str:
-    """名前から images_<name>.zip / labels_<name>.zip を展開（無ければ images/ を持つフォルダを使う）。"""
-    img = _first(os.path.join(drive_dir, name, f"images_{name}.zip"),
-                 os.path.join(drive_dir, f"images_{name}.zip"), f"images_{name}.zip")
-    lab = _first(os.path.join(drive_dir, name, f"labels_{name}.zip"),
-                 os.path.join(drive_dir, f"labels_{name}.zip"), f"labels_{name}.zip")
+    """<drive_dir>/<name>/ 内の images*.zip と labels*.zip を展開する。
+    （ラベリングツール出力の images.zip / labels_*.zip をフォルダに入れたものでもよい。
+    無ければ images/ を持つフォルダをそのまま使う）。"""
+    img = _glob1(os.path.join(drive_dir, name, "images*.zip"))
+    lab = _glob1(os.path.join(drive_dir, name, "labels*.zip"))
     if img and lab:
         return extract(img, lab, os.path.join(workdir, name))
     for d in (os.path.join(drive_dir, name), name):
         if os.path.isdir(os.path.join(d, "images")):
             return d
-    raise FileNotFoundError(
-        f"images_{name}.zip / labels_{name}.zip が見つかりません（{drive_dir} かアップロードを確認）")
+    raise FileNotFoundError(f"{drive_dir}/{name}/ に images*.zip / labels*.zip が見つかりません")
 
 
-def _first(*paths: str) -> str | None:
-    for p in paths:
-        if os.path.exists(p):
-            return p
-    return None
+def _glob1(pattern: str) -> str | None:
+    hits = sorted(glob(pattern))
+    return hits[0] if hits else None
 
 
 def combine(sources: list[str], work: str = "dataset", names: list[str] | None = None):
