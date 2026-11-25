@@ -7,44 +7,46 @@ from glob import glob
 from .dataset_util import DatasetChecker
 
 
-def extract(dataset_zip: str, dest: str) -> str:
-    """1つのデータセット zip を dest に展開する。"""
+def extract(images_zip: str, labels_zip: str, dest: str) -> str:
+    """images/labels zip を dest に展開する。"""
     from zipfile import ZipFile
 
     shutil.rmtree(dest, ignore_errors=True)
     os.makedirs(dest, exist_ok=True)
-    with ZipFile(dataset_zip) as z:
+    with ZipFile(images_zip) as z:
         z.extractall(dest)
-    return _find_dataset_root(dest)
-
-
-def _find_dataset_root(base: str) -> str:
-    """images/ を持つ階層をデータセットルートとして返す（1階層ネストしていても拾う）。"""
-    if os.path.isdir(f"{base}/images"):
-        return base
-    for images_dir in sorted(glob(f"{base}/**/images", recursive=True)):
-        return os.path.dirname(images_dir)
-    return base
+    with ZipFile(labels_zip) as z:
+        z.extractall(f"{dest}/labels")
+    return dest
 
 
 def available(drive_dir: str = ".") -> list[str]:
-    """使えるデータセット名の一覧（drive_dir 内 / カレントの zip 名から .zip を除いたもの）。"""
-    zips = glob(os.path.join(drive_dir, "*.zip")) + glob("*.zip")
-    return sorted({os.path.splitext(os.path.basename(p))[0] for p in zips})
+    """使えるデータセット名の一覧（<drive_dir>/<name>/images_<name>.zip から name を取り出す）。"""
+    imgs = (glob(os.path.join(drive_dir, "*", "images_*.zip"))
+            + glob(os.path.join(drive_dir, "images_*.zip")) + glob("images_*.zip"))
+    return sorted({os.path.basename(p)[len("images_"):-len(".zip")] for p in imgs})
 
 
 def prepare(name: str, drive_dir: str = ".", workdir: str = "ds") -> str:
-    """
-    データセット名から結合用の source パスを用意する。
-    戻り値: データセットルート（images/・labels/・labels.txt を持つ）。
-    """
-    for zp in (os.path.join(drive_dir, f"{name}.zip"), f"{name}.zip"):
-        if os.path.exists(zp):
-            return extract(zp, os.path.join(workdir, name))
+    """名前から images_<name>.zip / labels_<name>.zip を展開（無ければ images/ を持つフォルダを使う）。"""
+    img = _first(os.path.join(drive_dir, name, f"images_{name}.zip"),
+                 os.path.join(drive_dir, f"images_{name}.zip"), f"images_{name}.zip")
+    lab = _first(os.path.join(drive_dir, name, f"labels_{name}.zip"),
+                 os.path.join(drive_dir, f"labels_{name}.zip"), f"labels_{name}.zip")
+    if img and lab:
+        return extract(img, lab, os.path.join(workdir, name))
     for d in (os.path.join(drive_dir, name), name):
         if os.path.isdir(os.path.join(d, "images")):
             return d
-    raise FileNotFoundError(f"{name}.zip が見つかりません（{drive_dir} かアップロードを確認）")
+    raise FileNotFoundError(
+        f"images_{name}.zip / labels_{name}.zip が見つかりません（{drive_dir} かアップロードを確認）")
+
+
+def _first(*paths: str) -> str | None:
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    return None
 
 
 def combine(sources: list[str], work: str = "dataset", names: list[str] | None = None):
@@ -78,8 +80,8 @@ def combine(sources: list[str], work: str = "dataset", names: list[str] | None =
     with open(f"{work}/labels.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(merged))
 
-    ds = DatasetChecker(work) 
-    ds.relocate_label_files() 
+    ds = DatasetChecker(work)
+    ds.relocate_label_files()
     ds.create_custom_yaml()
     return f"{work}/custom.yaml", ds
 
@@ -133,4 +135,3 @@ def _namespaced(rel: str, tag: str) -> str:
         fname = rest[-1]
         return f"{split}/{tag}__{group}/{fname}"
     return f"{tag}__/{rel}"
-
